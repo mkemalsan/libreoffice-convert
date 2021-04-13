@@ -9,25 +9,31 @@ const { execFile } = require('child_process');
 const convertWithOptions = (document, format, filter, options, callback) => {
     const tmpOptions = (options || {}).tmpOptions || {};
     const asyncOptions = (options || {}).asyncOptions || {};
+    const appDir = (options || {}).appDir || false;
     const tempDir = tmp.dirSync({prefix: 'libreofficeConvert_', unsafeCleanup: true, ...tmpOptions});
     const installDir = tmp.dirSync({prefix: 'soffice', unsafeCleanup: true, ...tmpOptions});
     return async.auto({
         soffice: (callback) => {
             let paths = [];
-            switch (process.platform) {
-                case 'darwin': paths = ['/Applications/LibreOffice.app/Contents/MacOS/soffice'];
-                    break;
-                case 'linux': paths = ['/usr/bin/libreoffice', '/usr/bin/soffice'];
-                    break;
-                case 'win32': paths = [
-                    path.join(process.env['PROGRAMFILES(X86)'], 'LIBREO~1/program/soffice.exe'),
-                    path.join(process.env['PROGRAMFILES(X86)'], 'LibreOffice/program/soffice.exe'),
-                    path.join(process.env.PROGRAMFILES, 'LibreOffice/program/soffice.exe'),
-                ];
-                    break;
-                default:
-                    return callback(new Error(`Operating system not yet supported: ${process.platform}`));
+            if appDir === false {
+                switch (process.platform) {
+                    case 'darwin': paths = ['/Applications/LibreOffice.app/Contents/MacOS/soffice'];
+                        break;
+                    case 'linux': paths = ['/usr/bin/libreoffice', '/usr/bin/soffice'];
+                        break;
+                    case 'win32': paths = [
+                        path.join(process.env['PROGRAMFILES(X86)'], 'LIBREO~1/program/soffice.exe'),
+                        path.join(process.env['PROGRAMFILES(X86)'], 'LibreOffice/program/soffice.exe'),
+                        path.join(process.env.PROGRAMFILES, 'LibreOffice/program/soffice.exe'),
+                    ];
+                        break;
+                    default:
+                        return callback(new Error(`Operating system not yet supported: ${process.platform}`));
+                }                
+            } else {
+                paths = appDir;
             }
+
 
             return async.filter(
                 paths,
